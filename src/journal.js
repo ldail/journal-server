@@ -6,19 +6,29 @@ const { v4: uuidv4 } = require('uuid');
 
 router
   .get('/entries', (req, res) => {
-    console.log('endpoint hit');
     fs.readdir('./entries', (err, files) => {
-      console.log(files);
       if (err) {
         console.log(err);
         return res.status(500).send('Cannot get files');
       }
-      console.log(files);
-      return res.status(200).send(files);
+      // go through each file, map first line to array info
+      const fileNamesWithRealTitle = files.map(fileName => {
+        let readFile = '';
+        try {
+          readFile = fs.readFileSync(`./entries/${fileName}`);
+        } catch (error) {
+          console.log(error);
+          return res.status(500).send('Cannot get files');
+        }
+        const newBuf = readFile.toString();
+        const indexOfSplit = newBuf.indexOf(char => char === ',');
+        const realTitle = newBuf.slice(1, indexOfSplit);
+        return [fileName, realTitle];
+      });
+      return res.status(200).send(fileNamesWithRealTitle);
     });
   })
   .get('/entries/:entryId', (req, res) => {
-    console.log('get entryId hit', req.params.entryId);
     fs.readFile(`./entries/${req.params.entryId}`, (err, data) => {
       if (err) {
         console.log(err);
@@ -29,9 +39,7 @@ router
     });
   })
   .post('/entries', (req, res) => {
-    console.log('post endpoint hit');
     const {title, entryText} = req.body;
-    console.log(title);
     const randomFileName = uuidv4();
     const entryTextWithTitle = `[${title}, ${entryText}]`;
     fs.writeFile(`./entries/${randomFileName}`, entryTextWithTitle, (err) => {
