@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
+const { join } = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 router
   .get('/entries', (req, res) => {
     console.log('endpoint hit');
     fs.readdir('./entries', (err, files) => {
+      console.log(files);
       if (err) {
         console.log(err);
         return res.status(500).send('Cannot get files');
@@ -28,8 +31,12 @@ router
   .post('/entries', (req, res) => {
     console.log('post endpoint hit');
     const {title, entryText} = req.body;
-    fs.writeFile(`./entries/${title}`, entryText, (err) => {
+    console.log(title);
+    const randomFileName = uuidv4();
+    const entryTextWithTitle = `[${title}, ${entryText}]`;
+    fs.writeFile(`./entries/${randomFileName}`, entryTextWithTitle, (err) => {
       if (err) {
+        console.log(err);
         return res.status(500).send('Could not post');
       }
       return res.status(200).json('ok');
