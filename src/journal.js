@@ -11,8 +11,8 @@ router
         console.log(err);
         return res.status(500).send('Cannot get files');
       }
-      // go through each file, map first line to array info
-      const fileNamesWithRealTitle = files.map(fileName => {
+      // return each file
+      const allFilesWithInfo = files.map(fileName => {
         let readFile = '';
         try {
           readFile = fs.readFileSync(`./entries/${fileName}`);
@@ -21,11 +21,11 @@ router
           return res.status(500).send('Cannot get files');
         }
         const newBuf = readFile.toString();
-        const indexOfSplit = newBuf.indexOf(char => char === ',');
-        const realTitle = newBuf.slice(1, indexOfSplit);
-        return [fileName, realTitle];
+        // const indexOfSplit = newBuf.indexOf(char => char === ',');
+        // const realTitle = newBuf.slice(1, indexOfSplit);
+        return [fileName, newBuf];
       });
-      return res.status(200).send(fileNamesWithRealTitle);
+      return res.status(200).send(allFilesWithInfo);
     });
   })
   .get('/entries/:entryId', (req, res) => {
@@ -39,10 +39,8 @@ router
     });
   })
   .post('/entries', (req, res) => {
-    const {title, entryText} = req.body;
     const randomFileName = uuidv4();
-    const entryTextWithTitle = `[${title}, ${entryText}]`;
-    fs.writeFile(`./entries/${randomFileName}`, entryTextWithTitle, (err) => {
+    fs.writeFile(`./entries/${randomFileName}`, req.body.toString(), (err) => {
       if (err) {
         console.log(err);
         return res.status(500).send('Could not post');
